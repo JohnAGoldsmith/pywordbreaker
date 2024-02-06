@@ -10,6 +10,8 @@ import copy
 import math
 from latexTable import MakeLatexTable
 
+# Feb 6: [WF] small change (this comment) to test git
+
 verboseflag = False
 
 # Jan 6: added precision and recall.
