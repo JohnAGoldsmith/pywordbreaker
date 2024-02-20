@@ -10,7 +10,7 @@ import copy
 import math
 from latexTable import MakeLatexTable
 
-# Feb 6: [WF] small change (this comment) to test git
+# Feb 19 2024: [WF] added docstrings for key methods in Lexicon class, and explanatory comment line 906
 
 verboseflag = False
 
@@ -57,7 +57,7 @@ class Lexicon:
 		self.m_Profiles = Profiles("")
 		self.m_LetterDict=dict() 
 		self.m_LetterPlog = dict()
-		self.m_EntryDict = dict()
+		self.m_EntryDict = dict()   # maps entries in the lexicon (strings) to the corresponding lexicon entry objects [WF]
 		self.m_TrueDictionary = dict()
 		self.m_DictionaryLength = 0   #in bits! Check this is base 2, looks like default base in python
 		self.m_Corpus 	= list()
@@ -86,6 +86,7 @@ class Lexicon:
 	# ---------------------------------------------------------#	
 	# Found bug here July 5 2015: important, don't let it remove a singleton letter! John
 	def FilterZeroCountEntries(self, iteration_number):
+        """ Removes entries in the lexicon with count of 0 (but not singletons letters). [WF]"""
 		for key, entry in list(self.m_EntryDict.items()):
 			if len(key) == 1:
 				entry.m_Count = 1
@@ -97,6 +98,14 @@ class Lexicon:
 				print ("Excluding this bad candidate: ", key)
 	# ---------------------------------------------------------#
 	def ReadCorpus(self, infilename):
+        """ 
+        Reads corpus from file and intitalizes lexicon. 
+        
+        When initialized, a the entries of a lexicon consist of the letters in 
+        the alphabet of the corpus. 
+        
+        [WF]
+        """
 		print ("Name of data file: ", infilename)
 		if not os.path.isfile(infilename):
 			print ("Warning: ", infilename, " does not exist.")
@@ -118,7 +127,26 @@ class Lexicon:
 		self.ComputeDictFrequencies()
 	# ---------------------------------------------------------#
 	def ReadBrokenCorpus(self, infilename, numberoflines= 0):
+        """ 
+        Reads broken corpus from file and intitalizes lexicon.
+        
+        When initialized, the entries of a lexicon consist of the letters in 
+        the alphabet of the corpus. 
+        
+        From the original, word-separated, corpus this method records: 
+            - the number of words,
+            - each word, 
+            - and its count
+        to relevant attributes in Lexicon class. 
 
+        Because information about the state of the original corpus is recorded, 
+        our parse's precision and recall with respects to the original corpus
+        may be calculated later. 
+
+        Optionally, this methodtakes second argument which specifies the number 
+        of lines from the original corpus which should be read. 
+        [WF]
+        """
 		print ("Name of data file: ", infilename)
 		if not os.path.isfile(infilename):
 			print ("Warning: ", infilename, " does not exist.")
@@ -153,7 +181,7 @@ class Lexicon:
 					self.m_Glossary[word]= list()
 				self.m_Glossary[word].append((lineno, startpoint)) 
 				#print (word, self.m_Glossary[word])	
-			self. m_Corpus.append(this_line)
+			self.m_Corpus.append(this_line)         ### removed space [WF]
 			self.m_TrueBreakPointList.append(breakpoint_list)
 			for letter in line:
 				if letter not in self.m_EntryDict:
@@ -203,6 +231,7 @@ class Lexicon:
 		#outfile.close()
  # ---------------------------------------------------------#
 	def ComputeDictFrequencies(self):
+        """For each entry in the lexicon, compute its frequency of occurance. [WF]"""
 		TotalCount = 0
 		for (key, entry) in self.m_EntryDict.items():
 			TotalCount += entry.m_Count
@@ -217,6 +246,15 @@ class Lexicon:
 # ---------------------------------------------------------#
 	# added july 2015 john
 	def ComputeDictionaryLength(self):
+        """ 
+        Computes the dictionary length — which is the sum of individual word
+        lengths. Each individual word length is the sum of the plogs of the 
+        frequency of its letters. 
+        
+        The length of the dictionary is saved in the relevant atribute of the 
+        Lexicon class. 
+        [WF]
+        """
 		DictionaryLength = 0
 		for word in self.m_EntryDict:
 			wordlength = 0
@@ -229,6 +267,19 @@ class Lexicon:
 			 
 # ---------------------------------------------------------#
 	def ParseCorpus(self, outfile, outfile_parsings, current_iteration):
+        """ 
+        Parse corpus:
+            - break the corpus into chunks (highest probability parse)
+            - recalculate counts of each word entry in lexicon
+            - tabulate number of hypothesized running words
+        
+        Computes corpus cost and dictionary length (i.e. the compression of the 
+        data and length of this particular hypothesized lexicon). 
+
+        The sum of these — the copus cost and dictionary length — is the description
+        length, which is what is minimized in MDL (Minimum Description Length analysis.)
+        [WF]
+        """
 		print  ("#current_iteration# ", current_iteration, file = outfile_parsings )
 		#print ("current interation", current_iteration)
 		self.m_ParsedCorpus = list()
@@ -249,7 +300,7 @@ class Lexicon:
 				chunks.append(length)
 				self.m_EntryDict[word].m_Count +=1
 				self.m_NumberOfHypothesizedRunningWords += 1
-			breakpoint_list = chunks2breakpoints(chunks)
+			breakpoint_list = chunks2breakpoints(chunks) 
 			print (line_number, ':', sep='', file = outfile_parsings, end = '')
 			print (*breakpoint_list, sep=' ', file = outfile_parsings)
 			line_number+= 1
@@ -266,12 +317,22 @@ class Lexicon:
 		return  
 # ---------------------------------------------------------#		 	 
 	def PrintParsedCorpus(self,outfile):
+        """ Print's parsed corpus, line-by-line. [WF]"""
 		for line in self.m_ParsedCorpus:
 			PrintList(line,outfile)		
 # ---------------------------------------------------------#
 	
 # ---------------------------------------------------------#
 	def ParseWord(self, word, outfile):
+        """
+        Breaks a line of a corpus into chunks using outerscan / innerscan parse 
+        technique — see below. This method chooses the highest probability parse. 
+
+        Returns (as tuple):
+            - Parsed line, broken into chunks
+            - bit cost of parsing line (i.e. its compression of the data)
+        [WF]
+        """
 		wordlength = len(word)
 		Parse = dict()	 
 		Piece = ""	
@@ -322,10 +383,25 @@ class Lexicon:
 
 		if verboseflag: 
 			PrintList(Parse[wordlength], outfile)
-		bitcost = BestCompressedLength[outerscan]
+		bitcost = BestCompressedLength[outerscan] 
 		return (Parse[wordlength],bitcost)
 # ---------------------------------------------------------#
 	def GenerateCandidates(self, howmany, outfile):
+        """
+        Generates candidate words. 
+
+        Candidate words are formed by combining existing words in the lexicon which
+        appear adjacently in the parsed corpus. This method chooses a specified number
+        of the highest frequency candidate words. 
+
+        Args:
+            - howmany: K, the number of candidates to generate. We usually take K = 25
+            - outfile: the file to which relevant information should be printed
+
+        Returns:
+            - list of nominated words
+        [WF]
+        """
 		Nominees = dict()
 		NomineeList = list()
 		for parsed_line in self.m_ParsedCorpus:	 
@@ -363,11 +439,11 @@ class Lexicon:
 			wordlength = len(this_line)
 			ForwardProb = dict()
 			BackwardProb = dict()
-			Forward(this_line,ForwardProb)
+			Forward(this_line,ForwardProb) 
 			Backward(this_line,BackwardProb)
 			this_word_prob = BackwardProb[0]
 			
-			if WordProb > 0:
+			if WordProb > 0:          
 				for nPos in range(wordlength):
 					for End in range(nPos, wordlength-1):
 						if End- nPos + 1 > self.m_SizeOfLongestEntry:
@@ -423,6 +499,16 @@ class Lexicon:
 
 # ---------------------------------------------------------#		
 	def PrintLexicon(self, outfile):
+        """
+        Prints (alphabetically):
+            - members of the lexicon
+            - their counts over each iteration they were included in the lexicon 
+
+        Also:
+            - deleted candidate words
+            - the iteration when they were deleted    
+        [WF]
+        """
 		for key in sorted(self.m_EntryDict.keys()):			 
 			self.m_EntryDict[key].Display(outfile) 
 		for iteration, key in self.m_DeletionList:
@@ -436,7 +522,14 @@ class Lexicon:
 
 # ---------------------------------------------------------#
 	def RecallPrecision(self, iteration_number, outfile,total_word_count_in_parse):
-		 
+		"""
+        Calculates and prints the precision and recall of the current parse, 
+        relative to the true state of the corpus. 
+
+        Break-based, token-based, and type-based precision + recall values are 
+        calculated.
+        [WF]
+        """
 		total_true_positive_for_break = 0
 		total_number_of_hypothesized_words = 0
 		total_number_of_true_words = 0
@@ -809,7 +902,59 @@ def analyze_history_2(infile_parsings, target_word):
 
 			line_number += 1
 
-
+################################################################################
+# The following code develops lexicon from a broken corpus when this file is run
+# from the command line. 
+#
+# The user should provide:
+#   - datadirectory -- path the to the corpus file
+#
+#   - corpusfile -- name of the corpus file
+#
+#   - shortoutname -- a name used to identify the different outfiles that a run 
+#     of this code will generate for this run of the code
+#
+# The user may also specify:
+#   - numberofcycles -- the number of times the model should generate new 
+#     word-candidates on this run
+#
+#   - howmanycandidatesperiteration -- the number of candidates the model should
+#     generate during each iteration 
+#
+# Running this code prints information to a number of outfiles.
+#
+# Outfiles:
+#   <shortoutname>.txt
+#       - This is the general outfile. It records:
+#           * high level information about this cycle (number of cycles etc.)
+#           * the new candidate words chosen in each iteration, when they are 
+#             chosen, and how many times they appear
+#           * corpus cost, dictionary cost, and description length at each 
+#             iteration 
+#           * recall and precision in each iteration
+#
+#   <shortoutname>_processed_corpus.txt
+#       - the unbroken corpus, line-by-line, with true breakpoint info
+#
+#   <shortoutname>_iterated_parsings.txt
+#       - where breakpoints were inserted in the best parse of each iteration
+#
+#   <shortoutname>_final_broken_corpus.txt
+#       - the parsed corpus is printed here
+#
+#   <shortoutname>_lexicon.txt"
+#       - each entry in the lexicon and its count in each iteration
+#       - entries which were removed from the lexicon and when they were removed
+#
+#   <shortoutname>_simple_lexicon.txt
+#       - each entry in the lexicon
+#
+#   <shortoutname>_RecallPrecision.tsv
+#      - recall and precision in the last iteration
+#
+#   <shortoutname>_glossary.txt
+#       - The true words in the original corpus, and where they appear
+# [WF]
 
  
 total_word_count_in_parse 	= 0
