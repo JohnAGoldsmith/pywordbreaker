@@ -10,6 +10,8 @@ import copy
 import math
 from latexTable import MakeLatexTable
 
+# Feb 19 2024. [WF] Added explanatory comment line 237
+
 verboseflag = False
 
 # ---------------------------------------------------------#
@@ -233,7 +235,36 @@ def analyze_history(corpus_file, infile_parsings, locations, target_word, profil
 
 
 
-
+################################################################################
+# Given a target word, this code prints a history of the target word and other 
+# parses of the same text over all iterations of the Lexicon. 
+#
+# NB: Before running this code, the Lexicon should already have been generated
+#     and analyzed -- with information about hte relevant corpus already printed
+#     to a number of outfiles (see wordbreaker.py). 
+#
+# The user should provide:
+#   - datadirectory -- path the to the corpus file
+#
+#   - corpusfile -- name of the corpus file
+#
+#   - prefix -- a name used to identify the different outfiles that a run 
+#     of this code will generate
+#
+# The user may also specify:
+#   - numberofcycles -- the number of times the model should generate new 
+#     word-candidates
+#
+#   - howmanycandidatesperiteration -- the number of candidates the model should
+#     generate during each iteration 
+#
+# Running this code will print information to the following outfile:
+#
+#   <prefix>_analysis_.txt
+#       - for each iteration, the different parses of the target word and their
+#         counts.
+#
+# [WF]
 
 
 target_word = "history"
