@@ -101,8 +101,8 @@ class Lexicon:
         """ 
         Reads corpus from file and intitalizes lexicon. 
         
-        When initialized, a the entries of a lexicon consist of the letters in 
-        the alphabet of the corpus. 
+        When initialized, a the entries of a lexicon consist of all singleton 
+        letters in the corpus. 
         
         [WF]
         """
@@ -139,11 +139,7 @@ class Lexicon:
             - and its count
         to relevant attributes in Lexicon class. 
 
-        Because information about the state of the original corpus is recorded, 
-        our parse's precision and recall with respects to the original corpus
-        may be calculated later. 
-
-        Optionally, this methodtakes second argument which specifies the number 
+        Optionally, this method takes second argument which specifies the number 
         of lines from the original corpus which should be read. 
         [WF]
         """
@@ -170,9 +166,7 @@ class Lexicon:
 				self.m_NumberOfTrueRunningWords += 1
 				if word not in self.m_TrueDictionary:
 					self.m_TrueDictionary[word] = 1
-					#print ("125 true dict", word)
 				else:
-					#print (word)
 					self.m_TrueDictionary[word] += 1
 				startpoint = len(this_line)
 				this_line += word
@@ -180,8 +174,7 @@ class Lexicon:
 				if  word not in self.m_Glossary:
 					self.m_Glossary[word]= list()
 				self.m_Glossary[word].append((lineno, startpoint)) 
-				#print (word, self.m_Glossary[word])	
-			self.m_Corpus.append(this_line)         ### removed space [WF]
+			self.m_Corpus.append(this_line)        
 			self.m_TrueBreakPointList.append(breakpoint_list)
 			for letter in line:
 				if letter not in self.m_EntryDict:
@@ -218,20 +211,17 @@ class Lexicon:
 			newlist = list()
 			for number in self.m_TrueBreakPointList[lineno]:
 				newlist.append (str(number))
-			#print ("\n", 191, ' '.join(newlist) )
 			print ( ' '.join(newlist), file = outfile)		 
 			lineno += 1
-		#print ("#@#", file = outfile)
 	 
 		for word, hits in sorted(self.m_Glossary.items()):
 			print (word, self.m_TrueDictionary[word], file = outfile_glossary)
 			for item in self.m_Glossary[word]:
 				print (item[0], ':', item[1], ' ',  file = outfile_glossary, end='', sep='')
 			print (file=outfile_glossary)
-		#outfile.close()
  # ---------------------------------------------------------#
 	def ComputeDictFrequencies(self):
-        """For each entry in the lexicon, compute its frequency of occurance. [WF]"""
+        """For each entry in the lexicon, compute its frequency. [WF]"""
 		TotalCount = 0
 		for (key, entry) in self.m_EntryDict.items():
 			TotalCount += entry.m_Count
@@ -277,20 +267,17 @@ class Lexicon:
         data and length of this particular hypothesized lexicon). 
 
         The sum of these — the copus cost and dictionary length — is the description
-        length, which is what is minimized in MDL (Minimum Description Length analysis.)
+        length, which is what is minimized in MDL.
         [WF]
         """
 		print  ("#current_iteration# ", current_iteration, file = outfile_parsings )
-		#print ("current interation", current_iteration)
 		self.m_ParsedCorpus = list()
 		self.m_CorpusCost = 0.0	
 		self.m_NumberOfHypothesizedRunningWords = 0
-		#total_word_count_in_parse = 0	 
 		for word, lexicon_entry in self.m_EntryDict.items():
 			lexicon_entry.ResetCounts(current_iteration)
 		line_number = 0
 		for line in self.m_Corpus:	
-			#print (line)
 			chunks = list()
 			parsed_line,bit_cost = 	self.ParseWord(line, outfile)	
 			self.m_ParsedCorpus.append(parsed_line)
@@ -317,7 +304,7 @@ class Lexicon:
 		return  
 # ---------------------------------------------------------#		 	 
 	def PrintParsedCorpus(self,outfile):
-        """ Print's parsed corpus, line-by-line. [WF]"""
+        """ Prints parsed corpus, line-by-line. [WF]"""
 		for line in self.m_ParsedCorpus:
 			PrintList(line,outfile)		
 # ---------------------------------------------------------#
@@ -325,8 +312,9 @@ class Lexicon:
 # ---------------------------------------------------------#
 	def ParseWord(self, word, outfile):
         """
-        Breaks a line of a corpus into chunks using outerscan / innerscan parse 
-        technique — see below. This method chooses the highest probability parse. 
+        Breaks a line of a corpus into chunks using outerscan / innerscan technique. 
+        This method chooses the highest probability parse according to the current
+        state of the lexicon. 
 
         Returns (as tuple):
             - Parsed line, broken into chunks
@@ -377,10 +365,6 @@ class Lexicon:
 			if verboseflag: print >>outfile, "\n\t\t\t\t\t\t\t\tchosen:", LastChunk,
 			Parse[outerscan].append(LastChunk)
 
-			#if len(LastChunk) == 0:
-			#	print >>outfile, "line 212", word, Parse[outerscan]		 
-			#	print "line 212", word, "outerscan:", outerscan, "Last chunk:", LastChunk, Parse[outerscan]		
-
 		if verboseflag: 
 			PrintList(Parse[wordlength], outfile)
 		bitcost = BestCompressedLength[outerscan] 
@@ -396,10 +380,13 @@ class Lexicon:
 
         Args:
             - howmany: K, the number of candidates to generate. We usually take K = 25
-            - outfile: the file to which relevant information should be printed
+            - outfile: the file to which nominated words and their counts are printed
 
         Returns:
             - list of nominated words
+
+        Prints to outfile:
+            - nominated words and their counts
         [WF]
         """
 		Nominees = dict()
@@ -421,7 +408,6 @@ class Lexicon:
 				NomineeList.append((nominee,count))
 			if len(NomineeList) == howmany:
 				break
-		#print "Nominees:"
 		latex_data= list()
 		latex_data.append("piece   count   status")
 		for nominee, count in NomineeList:
@@ -433,7 +419,25 @@ class Lexicon:
 		return NomineeList
 
 # ---------------------------------------------------------#
-	def Expectation(self):
+# ---------------------------------------------------------#
+# The following 4 methods are not in use. 
+# 
+# Together these comprise the expectation-maximization (EM) procedure of 
+# Donald Rubin et. al -- an iterative method for often used to find local maxima
+# in optimization problems. 
+# 
+# The EM procedure could be used to find an optimal parse of the corpus given a
+# lexicon with fixed entries. This method allows for a given line in teh corpus 
+# to be multiply analyzed so the same stretch of letters can be parsed in more 
+# ways than one; but the counts total up to one, so there is no multiple counting. 
+#
+# However, experience suggests that this is overkill. Instead, the current 
+# implementation uses the most probable parse of each line (see the 'ParseWord' 
+# method). This has the added advantage of making the program run much faster. 
+#
+# [WF]
+	# not used [WF]
+    def Expectation(self):
 		self.m_NumberOfHypothesizedRunningWords = 0
 		for this_line in self.m_Corpus:
 			wordlength = len(this_line)
@@ -460,12 +464,14 @@ class Lexicon:
 
 
 # ---------------------------------------------------------#
-	def Maximization(self):
+	# not used [WF]
+    def Maximization(self):
 		for entry in self.m_EntryDict:
 			entry.m_Frequency = entry.m_Count / self.m_NumberOfHypothesizedRunningWords
 
 # ---------------------------------------------------------#
-	def Forward (self, this_line,ForwardProb):
+	# not used [WF]
+    def Forward (self, this_line,ForwardProb):
 		ForwardProb[0]=1.0
 		for Pos in range(1,Length+1):
 			ForwardProb[Pos] = 0.0
@@ -479,7 +485,8 @@ class Lexicon:
 		return ForwardProb
 
 # ---------------------------------------------------------#
-	def Backward(self, this_line,BackwardProb):
+	# not used [WF]
+    def Backward(self, this_line,BackwardProb):
 		
 		Last = len(this_line) -1
 		BackwardProb[Last+1] = 1.0
@@ -524,7 +531,7 @@ class Lexicon:
 	def RecallPrecision(self, iteration_number, outfile,total_word_count_in_parse):
 		"""
         Calculates and prints the precision and recall of the current parse, 
-        relative to the true state of the corpus. 
+        relative to the true state of the original corpus. 
 
         Break-based, token-based, and type-based precision + recall values are 
         calculated.
@@ -688,7 +695,6 @@ class Lexicon:
 # ---------------------------------------------------------#
 	def  analyze_history(self,infileparsings, target_word):
 		good_lines = dict()
-		#line_locations = list()
 		if  target_word not in self.m_Glossary:
 			print ("Target word not found in corpus.")
 		for lineno, startposition in self.m_Glossary[target_word]:
@@ -701,15 +707,7 @@ class Lexicon:
 			line = infileparsings.readline()
 			if len(line) == 0:
 				continue
-			#print (590, line)
-			#print (590, line)
-			#breakpoints = line.split()
-			#print (592, breakpoints)
-			#print()
-			#if len(breakpoints) == 0:
-			#	continue
 			line = line.split()
-			#print (597, line)
 			if line[0] == "#current_iteration#":
 				iteration = line[1]
 				print ("New iteration ", iteration)
@@ -717,10 +715,7 @@ class Lexicon:
 				self.m_Profiles[iteration] = dict()
 				continue
 			breakpoints  = [int(a) for a in line]
-			#print (603, breakpoints)
-			#print()
 			if (line_number in good_lines):				 
-				#print (607, breakpoints)
 				for startpoint in good_lines[line_number]:
 					multiword = self.analyze(line_number, target_word, startpoint, breakpoints)
 					print (609, target_word, multiword)
@@ -754,17 +749,14 @@ class Lexicon:
 		pointing_to = 0
 		for n in  range(len(breakpoint_list)):
 			if breakpoint_list[n] == position:
-				#print (648, "position ", position, "found in chunk number ", n)
 				return n;
 			if breakpoint_list[n] > position:
 				return n-1
 		return -1	
  	# ---------------------------------------------------------#
 	def piece_number2slice(self, line_number, breakpoints, chunk_number):
-		#print (652, "chunk number", chunk_number)
 		start_position = breakpoints[chunk_number]
 		end = breakpoints[chunk_number+1]
-		#print (657, "chunk ", self.m_Corpus[line_number][start_position:end])
 		return self.m_Corpus[line_number][start_position:end]
 
  	# ---------------------------------------------------------#
@@ -782,7 +774,6 @@ class Lexicon:
  	# takes breakpoint list and two breakpoint indexes, and gives a string of letters
 	def corpus_slice_sequence(self, line_number, breakpoint_list, first_piece_number, last_piece_number):
 		resulting_slice = ""
-		#print (655, "corpus slice sequence")
 		for n in range(first_piece_number, last_piece_number +1):
 			if len(resulting_slice) != 0:
 				resulting_slice += " "
@@ -819,7 +810,6 @@ class Lexicon:
 					if pointing_to + pieces[n+1] > startpoint:
 						output = self.corpus_slice(line_number, startpoint,  pieces[n])
 						print ("step 1d ", pieces[n+1]) 
-						#pointing_to  += len(pieces[n])
 						break;
 				pointing_to += pieces[n]
 				n += 1		
@@ -863,7 +853,6 @@ def chunks2breakpoints(chunk_list):
 # This is not a function in the class Lexicon
 def analyze_history_2(infile_parsings, target_word):
 		good_lines = dict()
-		#line_locations = list()
 		if  target_word not in self.m_Glossary:
 			print ("Target word not found in corpus.")
 		for lineno, startposition in self.m_Glossary[target_word]:
@@ -876,15 +865,7 @@ def analyze_history_2(infile_parsings, target_word):
 			line = infileparsings.readline()
 			if len(line) == 0:
 				continue
-			#print (590, line)
-			#print (590, line)
-			#breakpoints = line.split()
-			#print (592, breakpoints)
-			#print()
-			#if len(breakpoints) == 0:
-			#	continue
 			line = line.split()
-			#print (597, line)
 			if line[0] == "#current_iteration#":
 				iteration = line[1]
 				print ("New iteration ", iteration)
@@ -892,10 +873,7 @@ def analyze_history_2(infile_parsings, target_word):
 				self.m_Profiles[iteration] = dict()
 				continue
 			breakpoints  = [int(a) for a in line]
-			#print (603, breakpoints)
-			#print()
 			if (line_number in good_lines):				 
-				#print (607, breakpoints)
 				for startpoint in good_lines[line_number]:
 					multiword = self.analyze(line_number, target_word, startpoint, breakpoints)
 					print (609, target_word, multiword)
@@ -903,7 +881,7 @@ def analyze_history_2(infile_parsings, target_word):
 			line_number += 1
 
 ################################################################################
-# The following code develops lexicon from a broken corpus when this file is run
+# The following code develops a lexicon from a broken corpus when this file is run
 # from the command line. 
 #
 # The user should provide:
@@ -926,7 +904,7 @@ def analyze_history_2(infile_parsings, target_word):
 # Outfiles:
 #   <shortoutname>.txt
 #       - This is the general outfile. It records:
-#           * high level information about this cycle (number of cycles etc.)
+#           * high level information about this run (number of cycles etc.)
 #           * the new candidate words chosen in each iteration, when they are 
 #             chosen, and how many times they appear
 #           * corpus cost, dictionary cost, and description length at each 
@@ -934,7 +912,7 @@ def analyze_history_2(infile_parsings, target_word):
 #           * recall and precision in each iteration
 #
 #   <shortoutname>_processed_corpus.txt
-#       - the unbroken corpus, line-by-line, with true breakpoint info
+#       - the unbroken corpus, line-by-line, with true (original) breakpoint info
 #
 #   <shortoutname>_iterated_parsings.txt
 #       - where breakpoints were inserted in the best parse of each iteration

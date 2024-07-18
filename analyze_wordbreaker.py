@@ -49,13 +49,11 @@ class Profile:
 # ---------------------------------------------------------#
 def corpus_slice_from_piece_number(string, breakpoint_list, piece_number):
 		start_position = breakpoint_list[piece_number]
-		if piece_number == len(breakpoint_list) - 1:
-			#print (53, string, "start position", start_position, string[start_position] )
+		if piece_number == len(breakpoint_list) - 1: 
 			return  string[start_position]
 		else:
 			end_position = breakpoint_list[piece_number + 1]
 			length = end_position - start_position
-			#print (58, string, "start position", start_position, string[start_position], "end position", end_position, "length", length)
 			return  string[start_position:end_position]
 
 # ---------------------------------------------------------#
@@ -195,7 +193,6 @@ def list_of_strings2ints(this_list):
 	return result
 # ---------------------------------------------------------# 
 def get_breakpoints(infile_parsings, line_number, previous_computed_breakpoints):
-	#print (896, "get breakpoints for line ", line_number)
 	while (True):
 		current_line = infile_parsings.readline()
 		if current_line[:8] == "#current":
@@ -203,7 +200,6 @@ def get_breakpoints(infile_parsings, line_number, previous_computed_breakpoints)
 		if not current_line:
 			return list()
 		current_line = current_line.split(':')
-		#print (908, "current line ", current_line)
 		temp_line_number = int(current_line[0].strip())		
 		if (int(temp_line_number) == int(line_number)):			 
 			return list_of_strings2ints(current_line[1].split(' ')) 
@@ -240,8 +236,8 @@ def analyze_history(corpus_file, infile_parsings, locations, target_word, profil
 # parses of the same text over all iterations of the Lexicon. 
 #
 # NB: Before running this code, the Lexicon should already have been generated
-#     and analyzed -- with information about hte relevant corpus already printed
-#     to a number of outfiles (see wordbreaker.py). 
+#     and analyzed -- with information about the corpus already printed to the 
+#     relevant outfiles (see wordbreaker.py). 
 #
 # The user should provide:
 #   - datadirectory -- path the to the corpus file
